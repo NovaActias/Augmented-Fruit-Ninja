@@ -24,7 +24,6 @@ export class SceneManager {
     }
     
     async initialize() {
-        console.log('Initializing scene...');
         
         // Setup canvas dimensions
         this.canvas.width = this.videoElement.videoWidth || 1280;
@@ -66,7 +65,6 @@ export class SceneManager {
         // Initialize physics world
         this.setupPhysics();
         
-        console.log('Scene initialization complete');
     }
     
     setupVideoBackground() {
@@ -100,17 +98,14 @@ export class SceneManager {
     
     setupPhysics() {
 
-        console.log('🔧 CANNON object:', CANNON);
-        console.log('🔧 CANNON.World:', CANNON.World);
-
         // Initialize Cannon.js physics world
         this.physicsWorld = new CANNON.World();
 
-        console.log('Physics world created:', this.physicsWorld);
-        console.log('Physics world add method:', typeof this.physicsWorld.add);
         
-        this.physicsWorld.gravity.set(0, -3, 0); // Gravity pointing down
+        // REDUCED GRAVITY for slower falling (reduced from -3 to -2.2)
+        this.physicsWorld.gravity.set(0, -2.2, 0); 
         this.physicsWorld.broadphase = new CANNON.SAPBroadphase(this.physicsWorld);
+        
         // Create ground plane (invisible, no bounce)
         const groundShape = new CANNON.Plane();
         const groundBody = new CANNON.Body({ 
@@ -153,7 +148,6 @@ export class SceneManager {
             // Rimuovi dall'array
             this.physicsObjects.splice(index, 1);
             
-            console.log(`Physics object removed, remaining: ${this.physicsObjects.length}`);
             return true;
         }
         
@@ -168,7 +162,6 @@ export class SceneManager {
         const maxSubSteps = 3;
         this.physicsWorld.step(fixedTimeStep, deltaTime, maxSubSteps);
 
-        console.log('DeltaTime:', deltaTime.toFixed(4));
 
         // Sync Three.js objects with physics bodies
         this.physicsObjects.forEach(obj => {

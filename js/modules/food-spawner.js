@@ -9,36 +9,24 @@ export class FoodSpawner {
         this.spawnInterval = 0.8; // Spawn every 0.8 seconds
         this.maxFoods = 15; // Maximum foods on screen
         
-        // All available food types with their files and scales
+        // Weighted spawn system: higher weight = more frequent spawning
+        // Fruits: 85% total chance, Donut: 10%, Burger: 3%, Plate: 2%
+        
+        // Only fruits + plate, burger, donut - cute_apple much bigger, plate & burger much smaller
+        // Added weight system: fruits common, donut uncommon, burger/plate rare
         this.foodTypes = [
-            // Fruits
-            { name: 'apple', file: 'cute_apple.glb', scale: 16.0, category: 'fruit' },
-            { name: 'apple_red', file: 'apple_001.glb', scale: 12.0, category: 'fruit' },
-            { name: 'banana', file: 'banana_001.glb', scale: 10.0, category: 'fruit' },
-            { name: 'peach', file: 'peach_001.glb', scale: 12.0, category: 'fruit' },
+            // Fruits - HIGH SPAWN RATE
+            { name: 'apple', file: 'cute_apple.glb', scale: 32.0, category: 'fruit', weight: 25 }, // DOUBLED from 16.0
+            { name: 'apple_red', file: 'apple_001.glb', scale: 8.0, category: 'fruit', weight: 20 }, // Reduced from 12.0
+            { name: 'banana', file: 'banana_001.glb', scale: 7.0, category: 'fruit', weight: 20 }, // Reduced from 10.0
+            { name: 'peach', file: 'peach_001.glb', scale: 8.0, category: 'fruit', weight: 20 }, // Reduced from 12.0
             
-            // Vegetables
-            { name: 'carrot', file: 'carrot_001.glb', scale: 8.0, category: 'vegetable' },
-            { name: 'eggplant', file: 'eggplant_001.glb', scale: 10.0, category: 'vegetable' },
-            { name: 'tomato', file: 'tomato_001.glb', scale: 12.0, category: 'vegetable' },
+            // Special items - MEDIUM SPAWN RATE
+            { name: 'donut', file: 'donut_001.glb', scale: 8.0, category: 'dessert', weight: 10 }, // Reduced from 12.0
             
-            // Main dishes
-            { name: 'burger', file: 'burger_001.glb', scale: 15.0, category: 'main' },
-            { name: 'sandwich', file: 'sandwich_001.glb', scale: 12.0, category: 'main' },
-            { name: 'sushi', file: 'sushi_dish_001.glb', scale: 10.0, category: 'main' },
-            { name: 'fish', file: 'fish_001.glb', scale: 8.0, category: 'main' },
-            
-            // Snacks & Desserts
-            { name: 'donut', file: 'donut_001.glb', scale: 12.0, category: 'dessert' },
-            { name: 'ice_cream', file: 'ice_cream_dish_001.glb', scale: 8.0, category: 'dessert' },
-            { name: 'yogurt', file: 'yogurt_001.glb', scale: 8.0, category: 'snack' },
-            
-            // Drinks
-            { name: 'coffee1', file: 'coffee_001.glb', scale: 8.0, category: 'drink' },
-            { name: 'coffee2', file: 'coffee_002.glb', scale: 8.0, category: 'drink' },
-            
-            // Tableware
-            { name: 'plate', file: 'Plate_001.glb', scale: 12.0, category: 'tableware' }
+            // Rare items - LOW SPAWN RATE
+            { name: 'burger', file: 'burger_001.glb', scale: 5.0, category: 'main', weight: 3 }, // HALVED from 10.0
+            { name: 'plate', file: 'Plate_001.glb', scale: 4.0, category: 'tableware', weight: 2 } // HALVED from 8.0
         ];
         
         this.foodModels = new Map();
@@ -48,18 +36,13 @@ export class FoodSpawner {
     }
     
     async initialize() {
-        console.log('Initializing food spawner with', this.foodTypes.length, 'GLB models...');
-        
         try {
             await this.loadAllFoodModels();
             this.modelsLoaded = true;
-            console.log('All food models loaded successfully!');
         } catch (error) {
             console.error('Failed to load food models:', error);
             throw error;
         }
-        
-        console.log('Food spawner ready with', this.foodTypes.length, 'different foods');
     }
     
     async loadAllFoodModels() {
@@ -84,7 +67,6 @@ export class FoodSpawner {
                         // Store the configured model
                         this.foodModels.set(foodType.name, model);
                         this.loadedCount++;
-                        console.log(`Loaded ${foodType.name} (${this.loadedCount}/${this.foodTypes.length})`);
                         resolve();
                     },
                     (progress) => {
@@ -140,13 +122,28 @@ export class FoodSpawner {
     spawnFood() {
         if (this.foods.length >= this.maxFoods || !this.modelsLoaded) return;
         
-        // Pick a random food type
-        const randomIndex = Math.floor(Math.random() * this.foodTypes.length);
-        const foodType = this.foodTypes[randomIndex];
-        const foodModel = this.foodModels.get(foodType.name);
+        // Weighted random selection
+        const totalWeight = this.foodTypes.reduce((sum, type) => sum + type.weight, 0);
+        let randomWeight = Math.random() * totalWeight;
+        
+        let selectedFoodType = null;
+        for (const foodType of this.foodTypes) {
+            randomWeight -= foodType.weight;
+            if (randomWeight <= 0) {
+                selectedFoodType = foodType;
+                break;
+            }
+        }
+        
+        // Fallback to first type if something went wrong
+        if (!selectedFoodType) {
+            selectedFoodType = this.foodTypes[0];
+        }
+        
+        const foodModel = this.foodModels.get(selectedFoodType.name);
         
         if (!foodModel) {
-            console.error(`Food model ${foodType.name} not loaded`);
+            console.error(`Food model ${selectedFoodType.name} not loaded`);
             return;
         }
         
@@ -172,8 +169,8 @@ export class FoodSpawner {
         
         // Store food data
         this.foods.push({
-            type: foodType.name,
-            category: foodType.category,
+            type: selectedFoodType.name,
+            category: selectedFoodType.category,
             mesh: mesh,
             spawnTime: performance.now(),
             velocity: {
@@ -183,7 +180,6 @@ export class FoodSpawner {
             }
         });
         
-        console.log(`Spawned ${foodType.name} (${foodType.category}), total: ${this.foods.length}`);
     }
     
     update(deltaTime) {
@@ -198,22 +194,22 @@ export class FoodSpawner {
             this.spawnInterval = 0.5 + Math.random() * 0.8; // 0.5-1.3 seconds
         }
         
-        // Simple physics and cleanup
+        // Simple physics and cleanup - SLOWER GRAVITY
         for (let i = this.foods.length - 1; i >= 0; i--) {
             const food = this.foods[i];
             const pos = food.mesh.position;
             
-            // Simple gravity (adjustable speed)
-            food.velocity.y -= 2.5 * deltaTime; // Slower gravity
+            // Slower gravity (reduced from 2.5 to 1.8)
+            food.velocity.y -= 1.8 * deltaTime;
             
             // Update position
             pos.x += food.velocity.x * deltaTime;
             pos.y += food.velocity.y * deltaTime;
             pos.z += food.velocity.z * deltaTime;
             
-            // Simple rotation for natural look
-            food.mesh.rotation.x += 1.0 * deltaTime;
-            food.mesh.rotation.z += 0.5 * deltaTime;
+            // Simple rotation for natural look (slightly slower)
+            food.mesh.rotation.x += 0.8 * deltaTime; // Reduced from 1.0
+            food.mesh.rotation.z += 0.4 * deltaTime; // Reduced from 0.5
             
             // Remove if out of bounds or too old
             const age = performance.now() - food.spawnTime;
@@ -225,7 +221,6 @@ export class FoodSpawner {
             if (shouldRemove) {
                 this.sceneManager.getScene().remove(food.mesh);
                 this.foods.splice(i, 1);
-                console.log(`Removed food ${food.type}, remaining: ${this.foods.length}`);
             }
         }
     }

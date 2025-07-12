@@ -31,8 +31,6 @@ class AugmentedFoodNinja {
     
     async initialize() {
         try {
-            console.log('Initializing Augmented Food Ninja...');
-            
             // Initialize camera manager
             this.cameraManager = new CameraManager(this.videoElement);
             await this.cameraManager.initialize();
@@ -51,7 +49,6 @@ class AugmentedFoodNinja {
             // Hide loading screen
             this.loadingScreen.style.display = 'none';
             
-            console.log('Food Ninja initialization complete!');
             this.isInitialized = true;
             this.gameState = 'playing';
             
@@ -171,7 +168,6 @@ class AugmentedFoodNinja {
         // Reset game logic
         this.gameLogic.reset();
         
-        console.log('Game reset complete!');
     }
 }
 

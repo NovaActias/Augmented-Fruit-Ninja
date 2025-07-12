@@ -9,9 +9,7 @@ export class CameraManager {
     }
     
     async initialize() {
-        try {
-            console.log('Initializing camera...');
-            
+        try {      
             // Setup webcam constraints (similar to course examples)
             const constraints = {
                 audio: false,
@@ -29,7 +27,6 @@ export class CameraManager {
             // Wait for video metadata to load
             await new Promise((resolve) => {
                 this.videoElement.onloadedmetadata = () => {
-                    console.log(`Camera initialized: ${this.videoElement.videoWidth}x${this.videoElement.videoHeight}`);
                     this.isReady = true;
                     resolve();
                 };

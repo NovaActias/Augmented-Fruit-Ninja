@@ -5,25 +5,20 @@ export class GameLogic {
         this.foodsSliced = 0;
         this.gameTime = 0;
         
-        // Points by category - different values for different food types
+        // Points by category - only for the remaining food types
         this.pointsByCategory = {
-            fruit: 10,        // Apples, bananas, peaches
-            vegetable: 15,    // Carrots, eggplants, tomatoes
-            snack: 20,        // Chips, yogurt
-            dessert: 30,      // Donuts, ice cream
-            drink: 25,        // Coffee, wine, drinks
-            main: 50,         // Burgers, sushi, sandwiches, fish
-            tableware: 5      // Plates (bonus items)
+            fruit: 15,        // Apples, banana, peach (increased from 10)
+            main: 50,         // Burger (kept high value)
+            dessert: 30,      // Donut (kept same)
+            tableware: 5      // Plate (bonus item)
         };
         
         // Special bonuses for specific items
         this.specialBonuses = {
-            sushi: 75,        // Premium food
             burger: 60,       // Popular food
-            wine1: 40,        // Luxury drink
-            wine2: 40,        // Luxury drink
-            ice_cream: 35,    // Popular dessert
-            donut: 25         // Sweet treat
+            donut: 25,        // Sweet treat
+            apple: 20,        // Bonus for cute apple
+            // Standard fruits use category points
         };
         
         // Combo system
@@ -46,7 +41,7 @@ export class GameLogic {
     
     sliceFood(foodType, foodCategory) {
         // Get base points
-        let basePoints = this.pointsByCategory[foodCategory] || 10;
+        let basePoints = this.pointsByCategory[foodCategory] || 15;
         
         // Check for special bonuses
         if (this.specialBonuses[foodType]) {
@@ -106,8 +101,6 @@ export class GameLogic {
     
     // Get statistics by category
     getStatsByCategory() {
-        // This would need to track sliced foods by category
-        // For now, return basic stats
         return {
             totalScore: this.score,
             totalSliced: this.foodsSliced,
@@ -125,7 +118,6 @@ export class GameLogic {
         this.gameTime = 0;
         this.combo = 0;
         this.lastSliceTime = 0;
-        console.log('Game reset!');
     }
     
     // Get next level progress (0-1)
