@@ -1,3 +1,7 @@
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import * as CANNON from 'cannon-es';
+
 export class SceneManager {
     constructor(canvas, videoElement) {
         this.canvas = canvas;
@@ -87,6 +91,10 @@ export class SceneManager {
     setupPhysics() {
         // Initialize Cannon.js physics world
         this.physicsWorld = new CANNON.World();
+
+        console.log('Physics world created:', this.physicsWorld);
+        console.log('Physics world add method:', typeof this.physicsWorld.add);
+        
         this.physicsWorld.gravity.set(0, -9.82, 0); // Gravity pointing down
         this.physicsWorld.broadphase = new CANNON.NaiveBroadphase();
         

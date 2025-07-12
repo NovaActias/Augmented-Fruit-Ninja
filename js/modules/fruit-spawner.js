@@ -1,3 +1,7 @@
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import * as CANNON from 'cannon-es'
+
 export class FruitSpawner {
     constructor(sceneManager) {
         this.sceneManager = sceneManager;
