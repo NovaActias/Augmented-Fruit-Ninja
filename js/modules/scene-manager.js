@@ -51,7 +51,7 @@ export class SceneManager {
             100 // Far plane
         );
         this.camera.position.set(0, 0, 5);
-        this.scene.add(this.camera);
+        this.scene.addBody(this.camera);
         
         // Setup video background
         this.setupVideoBackground();
@@ -75,7 +75,7 @@ export class SceneManager {
     setupLighting() {
         // Ambient light for overall illumination
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-        this.scene.add(ambientLight);
+        this.scene.addBody(ambientLight);
         this.lights.push(ambientLight);
         
         // Directional light for shadows
@@ -84,11 +84,15 @@ export class SceneManager {
         directionalLight.castShadow = true;
         directionalLight.shadow.mapSize.width = 2048;
         directionalLight.shadow.mapSize.height = 2048;
-        this.scene.add(directionalLight);
+        this.scene.addBody(directionalLight);
         this.lights.push(directionalLight);
     }
     
     setupPhysics() {
+
+        console.log('🔧 CANNON object:', CANNON);
+        console.log('🔧 CANNON.World:', CANNON.World);
+
         // Initialize Cannon.js physics world
         this.physicsWorld = new CANNON.World();
 
@@ -104,12 +108,12 @@ export class SceneManager {
         groundBody.addShape(groundShape);
         groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
         groundBody.position.set(0, -10, 0);
-        this.physicsWorld.add(groundBody);
+        this.physicsWorld.addBody(groundBody);
     }
-    
+    x
     addPhysicsObject(mesh, body) {
-        this.scene.add(mesh);
-        this.physicsWorld.add(body);
+        this.scene.addBody(mesh);
+        this.physicsWorld.addBody(body);
         
         this.physicsObjects.push({ mesh, body });
         return this.physicsObjects.length - 1;

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import * as CANNON from 'cannon';
+import * as CANNON from 'cannon-es';
 
 // Import modules
 import { CameraManager } from './modules/camera-manager.js';
