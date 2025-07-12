@@ -36,10 +36,14 @@ export class SceneManager {
             antialias: true,
             alpha: false
         });
+
         this.renderer.setSize(this.canvas.width, this.canvas.height);
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         
+        this.renderer.shadowMap.autoUpdate = true;
+        this.renderer.shadowMap.needsUpdate = true; 
+
         // Create scene
         this.scene = new THREE.Scene();
         
@@ -79,16 +83,17 @@ export class SceneManager {
     
     setupLighting() {
         // Ambient light for overall illumination
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
         this.scene.add(ambientLight);
         this.lights.push(ambientLight);
         
         // Directional light for shadows
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
         directionalLight.position.set(5, 10, 5);
         directionalLight.castShadow = true;
-        directionalLight.shadow.mapSize.width = 2048;
-        directionalLight.shadow.mapSize.height = 2048;
+        directionalLight.shadow.mapSize.width = 1024;
+        directionalLight.shadow.mapSize.height = 1024;
+        directionalLight.shadow.camera.updateProjectionMatrix();
         this.scene.add(directionalLight);
         this.lights.push(directionalLight);
     }
@@ -154,19 +159,12 @@ export class SceneManager {
     update(deltaTime) {
         // Update physics simulation
         this.physicsWorld.step(deltaTime);
-        
+
         // Sync Three.js objects with physics bodies
         this.physicsObjects.forEach(obj => {
             obj.mesh.position.copy(obj.body.position);
             obj.mesh.quaternion.copy(obj.body.quaternion);
         });
-        
-        // RIMUOVI questo loop per evitare conflitti:
-        // for (let i = this.physicsObjects.length - 1; i >= 0; i--) {
-        //     if (this.physicsObjects[i].body.position.y < -15) {
-        //         this.removePhysicsObject(i);
-        //     }
-        // }
     }
     
     render() {
