@@ -39,8 +39,4 @@ export class GameLogic {
     }
 }
 
-// Initialize game when page loads
-window.addEventListener('load', () => {
-    const game = new AugmentedFruitNinja();
-    game.initialize();
-});
+
