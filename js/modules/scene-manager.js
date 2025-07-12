@@ -51,7 +51,7 @@ export class SceneManager {
             100 // Far plane
         );
         this.camera.position.set(0, 0, 5);
-        this.scene.addBody(this.camera);
+        this.scene.add(this.camera);
         
         // Setup video background
         this.setupVideoBackground();
@@ -75,7 +75,7 @@ export class SceneManager {
     setupLighting() {
         // Ambient light for overall illumination
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-        this.scene.addBody(ambientLight);
+        this.scene.add(ambientLight);
         this.lights.push(ambientLight);
         
         // Directional light for shadows
@@ -84,7 +84,7 @@ export class SceneManager {
         directionalLight.castShadow = true;
         directionalLight.shadow.mapSize.width = 2048;
         directionalLight.shadow.mapSize.height = 2048;
-        this.scene.addBody(directionalLight);
+        this.scene.add(directionalLight);
         this.lights.push(directionalLight);
     }
     
@@ -112,7 +112,7 @@ export class SceneManager {
     }
     x
     addPhysicsObject(mesh, body) {
-        this.scene.addBody(mesh);
+        this.scene.add(mesh);
         this.physicsWorld.addBody(body);
         
         this.physicsObjects.push({ mesh, body });
