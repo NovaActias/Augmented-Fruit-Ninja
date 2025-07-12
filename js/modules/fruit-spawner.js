@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 import * as CANNON from 'cannon-es'
 
 export class FruitSpawner {
@@ -13,21 +13,80 @@ export class FruitSpawner {
         // Fruit types and models
         this.fruitTypes = ['apple', 'orange', 'banana', 'watermelon'];
         this.fruitModels = new Map();
-        this.loader = new GLTFLoader();
+        this.loader = new FBXLoader();
+        this.modelsLoaded = false;
+        
+        // Scale factors per each fruit type (to match original geometry sizes)
+        this.fruitScales = {
+            apple: 0.006,     // Scale down significantly (FBX models are usually large)
+            orange: 0.005,
+            banana: 0.004,
+            watermelon: 0.008
+        };
     }
     
     async initialize() {
-        console.log('Initializing fruit spawner...');
+        console.log('Initializing fruit spawner with FBX models...');
         
-        // For now, create simple geometric fruits instead of loading models
-        // This is faster for development and testing
-        this.createGeometricFruits();
+        try {
+            await this.loadFBXModels();
+            this.modelsLoaded = true;
+            console.log('All FBX models loaded successfully');
+        } catch (error) {
+            console.error('Failed to load FBX models:', error);
+            // Fallback to geometric shapes if FBX loading fails
+            this.createGeometricFruits();
+            this.modelsLoaded = true;
+        }
         
         console.log('Fruit spawner ready');
     }
     
+    async loadFBXModels() {
+        const loadPromises = this.fruitTypes.map(fruitType => {
+            return new Promise((resolve, reject) => {
+                this.loader.load(
+                    `assets/${fruitType}.fbx`,
+                    (fbx) => {
+                        // Scale the model to appropriate size
+                        const scale = this.fruitScales[fruitType];
+                        fbx.scale.setScalar(scale);
+                        
+                        // Center the model
+                        const box = new THREE.Box3().setFromObject(fbx);
+                        const center = box.getCenter(new THREE.Vector3());
+                        fbx.position.sub(center);
+                        
+                        // Enable shadows
+                        fbx.traverse((child) => {
+                            if (child.isMesh) {
+                                child.castShadow = true;
+                                child.receiveShadow = true;
+                            }
+                        });
+                        
+                        // Store the loaded model
+                        this.fruitModels.set(fruitType, fbx.clone());
+                        console.log(`Loaded ${fruitType}.fbx`);
+                        resolve();
+                    },
+                    (progress) => {
+                        console.log(`Loading ${fruitType}: ${Math.round(progress.loaded / progress.total * 100)}%`);
+                    },
+                    (error) => {
+                        console.error(`Error loading ${fruitType}.fbx:`, error);
+                        reject(error);
+                    }
+                );
+            });
+        });
+        
+        await Promise.all(loadPromises);
+    }
+    
+    // Fallback method (keep the original geometric method)
     createGeometricFruits() {
-        // Create simple geometric representations of fruits
+        console.log('Using fallback geometric fruits');
         const materials = {
             apple: new THREE.MeshLambertMaterial({ color: 0xff4444 }),
             orange: new THREE.MeshLambertMaterial({ color: 0xff8844 }),
@@ -57,14 +116,22 @@ export class FruitSpawner {
     }
     
     spawnFruit() {
-        if (this.fruits.length >= this.maxFruits) return;
+        if (this.fruits.length >= this.maxFruits || !this.modelsLoaded) return;
         
         // Random fruit type
         const fruitType = this.fruitTypes[Math.floor(Math.random() * this.fruitTypes.length)];
-        const fruitData = this.fruitModels.get(fruitType);
+        const fruitModel = this.fruitModels.get(fruitType);
         
         // Create mesh
-        const mesh = new THREE.Mesh(fruitData.geometry, fruitData.material);
+        let mesh;
+        if (fruitModel.geometry) {
+            // Geometric fallback
+            mesh = new THREE.Mesh(fruitModel.geometry, fruitModel.material);
+        } else {
+            // FBX model
+            mesh = fruitModel.clone();
+        }
+        
         mesh.castShadow = true;
         mesh.receiveShadow = true;
         
@@ -75,7 +142,7 @@ export class FruitSpawner {
         
         mesh.position.set(spawnX, spawnY, spawnZ);
         
-        // Create physics body
+        // Create physics body based on fruit type
         let shape;
         switch(fruitType) {
             case 'banana':
@@ -93,26 +160,26 @@ export class FruitSpawner {
         
         // Add random rotation
         body.angularVelocity.set(
-            (Math.random() - 0.5) * 10,
-            (Math.random() - 0.5) * 10,
-            (Math.random() - 0.5) * 10
+            (Math.random() - 0.5) * 2,
+            (Math.random() - 0.5) * 2,
+            (Math.random() - 0.5) * 2
         );
         
-        // Add to scene - salva il riferimento diretto
+        // Add to scene
         const physicsObject = this.sceneManager.addPhysicsObject(mesh, body);
         
-        // Store fruit data con riferimento diretto
+        // Store fruit data
         this.fruits.push({
             type: fruitType,
             mesh: mesh,
             body: body,
-            physicsObject: physicsObject,  // Riferimento diretto invece di indice
+            physicsObject: physicsObject,
             spawnTime: performance.now()
         });
         
-        console.log(`Spawned ${fruitType} fruit`);
+        console.log(`Spawned ${fruitType} fruit (FBX model)`);
     }
-        
+    
     update(deltaTime) {
         // Update spawn timer
         this.spawnTimer += deltaTime;
@@ -120,7 +187,9 @@ export class FruitSpawner {
         if (this.spawnTimer >= this.spawnInterval) {
             this.spawnFruit();
             this.spawnTimer = 0;
-            this.spawnInterval = 1.5 + Math.random() * 1.0;
+            
+            // Slightly randomize next spawn time
+            this.spawnInterval = 1.5 + Math.random() * 1.0; // 1.5-2.5 seconds
         }
         
         // Clean up fruits with tighter bounds
