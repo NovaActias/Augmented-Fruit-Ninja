@@ -62,7 +62,12 @@ export class FruitSpawner {
                             if (child.isMesh) {
                                 child.castShadow = true;
                                 child.receiveShadow = true;
-                            }
+                                
+                                // Color space fix
+                                if (child.material && child.material.map) {
+                                    child.material.map.colorSpace = THREE.SRGBColorSpace;
+                                    }
+                                }
                         });
                         
                         // Store the loaded model
@@ -88,10 +93,10 @@ export class FruitSpawner {
     createGeometricFruits() {
         console.log('Using fallback geometric fruits');
         const materials = {
-            apple: new THREE.MeshLambertMaterial({ color: 0xff4444 }),
-            orange: new THREE.MeshLambertMaterial({ color: 0xff8844 }),
-            banana: new THREE.MeshLambertMaterial({ color: 0xffff44 }),
-            watermelon: new THREE.MeshLambertMaterial({ color: 0x44ff44 })
+            apple: new THREE.MeshStandardMaterial({ color: 0xff4444, roughness: 0.7, metalness: 0.1 }),
+            orange: new THREE.MeshStandardMaterial({ color: 0xff8844, roughness: 0.8, metalness: 0.1 }),
+            banana: new THREE.MeshStandardMaterial({ color: 0xffff44, roughness: 0.6, metalness: 0.1 }),
+            watermelon: new THREE.MeshStandardMaterial({ color: 0x44ff44, roughness: 0.7, metalness: 0.1 })
         };
         
         this.fruitTypes.forEach(type => {
@@ -118,23 +123,51 @@ export class FruitSpawner {
     spawnFruit() {
         if (this.fruits.length >= this.maxFruits || !this.modelsLoaded) return;
         
-        // Random fruit type
         const fruitType = this.fruitTypes[Math.floor(Math.random() * this.fruitTypes.length)];
         const fruitModel = this.fruitModels.get(fruitType);
         
-        // Create mesh
         let mesh;
         if (fruitModel.geometry) {
-            // Geometric fallback
             mesh = new THREE.Mesh(fruitModel.geometry, fruitModel.material);
         } else {
-            // FBX model
-            mesh = fruitModel.clone();
-        }
+
+        mesh = fruitModel.clone();
+        
+        mesh.traverse((child) => {
+            if (child.isMesh && child.material) {
+                child.material = child.material.clone();
+                child.material.emissiveIntensity = 0.0;
+            }
+        });
+    }
         
         mesh.castShadow = true;
         mesh.receiveShadow = true;
         
+        // Dopo aver creato il mesh, aggiungi:
+        console.log(`Spawning ${fruitType}:`, {
+            isGeometric: !!fruitModel.geometry,
+            materialType: mesh.material?.type,
+            roughness: mesh.material?.roughness,
+            metalness: mesh.material?.metalness,
+            emissive: mesh.material?.emissive,
+            emissiveIntensity: mesh.material?.emissiveIntensity
+        });
+
+        if (!fruitModel.geometry) {
+        mesh.traverse((child) => {
+            if (child.isMesh && child.material) {
+                console.log(`  Child material for ${fruitType}:`, {
+                    materialType: child.material.type,
+                    roughness: child.material.roughness,
+                    metalness: child.material.metalness,
+                    emissive: child.material.emissive,
+                    emissiveIntensity: child.material.emissiveIntensity
+                });
+            }
+        });
+    }
+
         // Random spawn position (top of screen, random X)
         const spawnX = (Math.random() - 0.5) * 8; // -4 to 4
         const spawnY = 6; // Above screen
