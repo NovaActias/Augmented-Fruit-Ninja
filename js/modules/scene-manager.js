@@ -104,8 +104,8 @@ export class SceneManager {
         console.log('Physics world created:', this.physicsWorld);
         console.log('Physics world add method:', typeof this.physicsWorld.add);
         
-        this.physicsWorld.gravity.set(0, -9.82, 0); // Gravity pointing down
-        this.physicsWorld.broadphase = new CANNON.NaiveBroadphase();
+        this.physicsWorld.gravity.set(0, -1, 0); // Gravity pointing down
+        this.physicsWorld.broadphase = new CANNON.SAPBroadphase(this.physicsWorld);
         
         // Create ground plane (invisible)
         const groundShape = new CANNON.Plane();
