@@ -69,6 +69,11 @@ export class SceneManager {
         // Create video texture for background
         this.backgroundTexture = new THREE.VideoTexture(this.videoElement);
         this.backgroundTexture.colorSpace = THREE.SRGBColorSpace;
+
+        //Camera feed flipped vertically
+        this.backgroundTexture.wrapS = THREE.RepeatWrapping;
+        this.backgroundTexture.repeat.x = -1;
+
         this.scene.background = this.backgroundTexture;
     }
     
