@@ -5,10 +5,10 @@ import * as CANNON from 'cannon-es';
 // Import modules
 import { CameraManager } from './modules/camera-manager.js';
 import { SceneManager } from './modules/scene-manager.js';
-import { FruitSpawner } from './modules/fruit-spawner.js';
+import { FoodSpawner } from './modules/food-spawner.js';
 import { GameLogic } from './modules/game-logic.js';
 
-class AugmentedFruitNinja {
+class AugmentedFoodNinja {
     constructor() {
         this.isInitialized = false;
         this.lastTime = 0;
@@ -17,7 +17,7 @@ class AugmentedFruitNinja {
         // Core components
         this.cameraManager = null;
         this.sceneManager = null;
-        this.fruitSpawner = null;
+        this.foodSpawner = null;
         this.gameLogic = null;
         
         // DOM elements
@@ -25,13 +25,13 @@ class AugmentedFruitNinja {
         this.canvas = document.getElementById('gameCanvas');
         this.loadingScreen = document.getElementById('loadingScreen');
         this.scoreElement = document.getElementById('scoreValue');
-        this.fruitCountElement = document.getElementById('fruitCount');
+        this.foodCountElement = document.getElementById('fruitCount'); // Keep existing HTML element
         this.debugElement = document.getElementById('debugInfo');
     }
     
     async initialize() {
         try {
-            console.log('Initializing Augmented Fruit Ninja...');
+            console.log('Initializing Augmented Food Ninja...');
             
             // Initialize camera manager
             this.cameraManager = new CameraManager(this.videoElement);
@@ -41,9 +41,9 @@ class AugmentedFruitNinja {
             this.sceneManager = new SceneManager(this.canvas, this.videoElement);
             await this.sceneManager.initialize();
             
-            // Initialize fruit spawner
-            this.fruitSpawner = new FruitSpawner(this.sceneManager);
-            await this.fruitSpawner.initialize();
+            // Initialize food spawner
+            this.foodSpawner = new FoodSpawner(this.sceneManager);
+            await this.foodSpawner.initialize();
             
             // Initialize game logic
             this.gameLogic = new GameLogic();
@@ -51,7 +51,7 @@ class AugmentedFruitNinja {
             // Hide loading screen
             this.loadingScreen.style.display = 'none';
             
-            console.log('Initialization complete!');
+            console.log('Food Ninja initialization complete!');
             this.isInitialized = true;
             this.gameState = 'playing';
             
@@ -97,8 +97,8 @@ class AugmentedFruitNinja {
         // Update scene manager (physics)
         this.sceneManager.update(deltaTime);
         
-        // Update fruit spawner
-        this.fruitSpawner.update(deltaTime);
+        // Update food spawner
+        this.foodSpawner.update(deltaTime);
         
         // Update game logic
         this.gameLogic.update(deltaTime);
@@ -112,19 +112,74 @@ class AugmentedFruitNinja {
     }
     
     updateUI() {
-        this.scoreElement.textContent = this.gameLogic.score;
-        this.fruitCountElement.textContent = this.fruitSpawner.getActiveFruitCount();
+        // Basic score display
+        this.scoreElement.textContent = this.gameLogic.getScore();
+        this.foodCountElement.textContent = this.foodSpawner.getActiveFoodCount();
         
-        // Debug info
+        // Enhanced debug info with food system stats
         if (this.sceneManager) {
             const fps = Math.round(1000 / (performance.now() - this.lastTime + 1));
-            this.debugElement.innerHTML = `FPS: ${fps}`;
+            const stats = this.gameLogic.getStatsByCategory();
+            
+            this.debugElement.innerHTML = `
+                FPS: ${fps} | 
+                Level: ${stats.currentLevel} | 
+                Combo: ${stats.currentCombo > 1 ? 'x' + stats.currentCombo : 'None'} |
+                Foods: ${stats.totalSliced}
+            `;
         }
+    }
+    
+    // Method to handle food slicing (for future collision detection)
+    sliceFood(food) {
+        const result = this.gameLogic.sliceFood(food.type, food.category);
+        
+        // Remove the food from spawner
+        const foodIndex = this.foodSpawner.getFoods().indexOf(food);
+        if (foodIndex !== -1) {
+            this.sceneManager.getScene().remove(food.mesh);
+            this.foodSpawner.getFoods().splice(foodIndex, 1);
+        }
+        
+        // Could add visual effects here (particles, sound, etc.)
+        console.log(`Sliced ${food.type}! +${result.points} points`);
+        
+        return result;
+    }
+    
+    // Get current game state
+    getGameState() {
+        return {
+            score: this.gameLogic.getScore(),
+            level: this.gameLogic.getLevel(),
+            combo: this.gameLogic.getCombo(),
+            foodsSliced: this.gameLogic.getFoodsSliced(),
+            activeFoods: this.foodSpawner.getActiveFoodCount(),
+            gameTime: this.gameLogic.getGameTime()
+        };
+    }
+    
+    // Reset game
+    resetGame() {
+        // Clear all active foods
+        const foods = this.foodSpawner.getFoods();
+        foods.forEach(food => {
+            this.sceneManager.getScene().remove(food.mesh);
+        });
+        foods.length = 0;
+        
+        // Reset game logic
+        this.gameLogic.reset();
+        
+        console.log('Game reset complete!');
     }
 }
 
 // Initialize game when page loads
 window.addEventListener('load', () => {
-    const game = new AugmentedFruitNinja();
+    const game = new AugmentedFoodNinja();
     game.initialize();
+    
+    // Make game globally accessible for debugging
+    window.foodNinjaGame = game;
 });

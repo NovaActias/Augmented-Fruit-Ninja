@@ -109,12 +109,17 @@ export class SceneManager {
         console.log('Physics world created:', this.physicsWorld);
         console.log('Physics world add method:', typeof this.physicsWorld.add);
         
-        this.physicsWorld.gravity.set(0, -1, 0); // Gravity pointing down
+        this.physicsWorld.gravity.set(0, -3, 0); // Gravity pointing down
         this.physicsWorld.broadphase = new CANNON.SAPBroadphase(this.physicsWorld);
-        
-        // Create ground plane (invisible)
+        // Create ground plane (invisible, no bounce)
         const groundShape = new CANNON.Plane();
-        const groundBody = new CANNON.Body({ mass: 0 });
+        const groundBody = new CANNON.Body({ 
+            mass: 0,
+            material: new CANNON.Material({
+                friction: 0.1,
+                restitution: 0.0  // No bounce!
+            })
+        });
         groundBody.addShape(groundShape);
         groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
         groundBody.position.set(0, -10, 0);
@@ -158,7 +163,12 @@ export class SceneManager {
         
     update(deltaTime) {
         // Update physics simulation
-        this.physicsWorld.step(deltaTime);
+        // Fixed timestep for more stable physics
+        const fixedTimeStep = 1/60; // 60 FPS fixed
+        const maxSubSteps = 3;
+        this.physicsWorld.step(fixedTimeStep, deltaTime, maxSubSteps);
+
+        console.log('DeltaTime:', deltaTime.toFixed(4));
 
         // Sync Three.js objects with physics bodies
         this.physicsObjects.forEach(obj => {
