@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 
+
 export class CameraManager {
     constructor(videoElement) {
         this.videoElement = videoElement;

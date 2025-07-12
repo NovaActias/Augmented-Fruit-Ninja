@@ -115,24 +115,42 @@ export class SceneManager {
         groundBody.position.set(0, -10, 0);
         this.physicsWorld.addBody(groundBody);
     }
-    x
+    
     addPhysicsObject(mesh, body) {
         this.scene.add(mesh);
         this.physicsWorld.addBody(body);
         
-        this.physicsObjects.push({ mesh, body });
-        return this.physicsObjects.length - 1;
+        const physicsObject = { mesh, body };
+        this.physicsObjects.push(physicsObject);
+        
+        // Restituisci il riferimento diretto all'oggetto invece dell'indice
+        return physicsObject;
     }
     
-    removePhysicsObject(index) {
-        if (index >= 0 && index < this.physicsObjects.length) {
-            const obj = this.physicsObjects[index];
-            this.scene.remove(obj.mesh);
-            this.physicsWorld.remove(obj.body);
+    removePhysicsObject(physicsObject) {
+        if (!physicsObject) return false;
+        
+        // Trova l'indice dell'oggetto nell'array
+        const index = this.physicsObjects.indexOf(physicsObject);
+        
+        if (index !== -1) {
+            // Rimuovi dalla scena Three.js
+            this.scene.remove(physicsObject.mesh);
+            
+            // Rimuovi dal mondo fisico Cannon.js
+            this.physicsWorld.removeBody(physicsObject.body);
+            
+            // Rimuovi dall'array
             this.physicsObjects.splice(index, 1);
+            
+            console.log(`Physics object removed, remaining: ${this.physicsObjects.length}`);
+            return true;
         }
+        
+        console.warn('Physics object not found in array');
+        return false;
     }
-    
+        
     update(deltaTime) {
         // Update physics simulation
         this.physicsWorld.step(deltaTime);
@@ -143,12 +161,12 @@ export class SceneManager {
             obj.mesh.quaternion.copy(obj.body.quaternion);
         });
         
-        // Remove objects that fell too far
-        for (let i = this.physicsObjects.length - 1; i >= 0; i--) {
-            if (this.physicsObjects[i].body.position.y < -15) {
-                this.removePhysicsObject(i);
-            }
-        }
+        // RIMUOVI questo loop per evitare conflitti:
+        // for (let i = this.physicsObjects.length - 1; i >= 0; i--) {
+        //     if (this.physicsObjects[i].body.position.y < -15) {
+        //         this.removePhysicsObject(i);
+        //     }
+        // }
     }
     
     render() {

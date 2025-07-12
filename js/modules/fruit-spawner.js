@@ -98,21 +98,21 @@ export class FruitSpawner {
             (Math.random() - 0.5) * 10
         );
         
-        // Add to scene
-        const objectIndex = this.sceneManager.addPhysicsObject(mesh, body);
+        // Add to scene - salva il riferimento diretto
+        const physicsObject = this.sceneManager.addPhysicsObject(mesh, body);
         
-        // Store fruit data
+        // Store fruit data con riferimento diretto
         this.fruits.push({
             type: fruitType,
             mesh: mesh,
             body: body,
-            objectIndex: objectIndex,
+            physicsObject: physicsObject,  // Riferimento diretto invece di indice
             spawnTime: performance.now()
         });
         
         console.log(`Spawned ${fruitType} fruit`);
     }
-    
+        
     update(deltaTime) {
         // Update spawn timer
         this.spawnTimer += deltaTime;
@@ -120,19 +120,26 @@ export class FruitSpawner {
         if (this.spawnTimer >= this.spawnInterval) {
             this.spawnFruit();
             this.spawnTimer = 0;
-            
-            // Slightly randomize next spawn time
-            this.spawnInterval = 1.5 + Math.random() * 1.0; // 1.5-2.5 seconds
+            this.spawnInterval = 1.5 + Math.random() * 1.0;
         }
         
-        // Clean up fruits that are too old or fell off screen
+        // Clean up fruits with tighter bounds
         for (let i = this.fruits.length - 1; i >= 0; i--) {
             const fruit = this.fruits[i];
+            const pos = fruit.body.position;
             
-            // Remove if fell too far or too old
-            if (fruit.body.position.y < -15 || 
-                performance.now() - fruit.spawnTime > 10000) {
+            // Limiti più stretti per eliminazione rapida
+            const shouldRemove = (
+                pos.x < -8 || pos.x > 8 ||      // Fuori dai lati
+                pos.y < -5 || pos.y > 8 ||      // Sotto o troppo sopra
+                pos.z < -3 || pos.z > 3 ||      // Troppo avanti/dietro
+                performance.now() - fruit.spawnTime > 8000  // Max 8 secondi di vita
+            );
+            
+            if (shouldRemove) {
+                this.sceneManager.removePhysicsObject(fruit.physicsObject);
                 this.fruits.splice(i, 1);
+                console.log(`Removed fruit ${fruit.type}, remaining: ${this.fruits.length}`);
             }
         }
     }
