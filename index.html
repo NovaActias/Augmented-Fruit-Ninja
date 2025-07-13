@@ -8,7 +8,8 @@
         "imports": {
             "three": "https://unpkg.com/three/build/three.module.js",
             "three/addons/": "https://unpkg.com/three/examples/jsm/",
-            "cannon-es": "https://unpkg.com/cannon-es/dist/cannon-es.js"
+            "cannon-es": "https://unpkg.com/cannon-es/dist/cannon-es.js",
+            "vision": "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision"
         }
     }
     </script>
@@ -66,6 +67,19 @@
             font-size: 24px;
             z-index: 200;
         }
+        
+        /* Hand tracking debug overlay */
+        #handDebug {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            font-size: 14px;
+            z-index: 100;
+            background: rgba(0,0,0,0.5);
+            padding: 10px;
+            border-radius: 5px;
+        }
     </style>
     <script type="module" src="js/main.js"></script>
 </head>
@@ -76,8 +90,12 @@
         
         <div id="gameUI">
             <div>Score: <span id="scoreValue">0</span></div>
-            <div>Fruits: <span id="fruitCount">0</span></div>
             <div id="debugInfo"></div>
+        </div>
+        
+        <div id="handDebug">
+            <div>Hands: <span id="handCount">0</span></div>
+            <div>Collision: <span id="collisionStatus">None</span></div>
         </div>
         
         <div id="loadingScreen">
@@ -85,4 +103,6 @@
         </div>
     </div>
 
-    <script type="module">
+    <script type="module"></script>
+</body>
+</html>

@@ -11,14 +11,15 @@ export class FoodSpawner {
         
         // Weighted spawn system: higher weight = more frequent spawning
         // Fruits: 85% total chance, Donut: 10%, Burger: 3%, Plate: 2%
+        // PRECISION SLICING: Only index finger can slice, smaller bounding boxes
         
-        // Only fruits + plate, burger, donut - cute_apple much bigger, plate & burger much smaller
+        // Only fruits + plate, burger, donut - cute_apple bigger but not excessive, plate & burger much smaller
         // Added weight system: fruits common, donut uncommon, burger/plate rare
         this.foodTypes = [
             // Fruits - HIGH SPAWN RATE
-            { name: 'apple', file: 'cute_apple.glb', scale: 32.0, category: 'fruit', weight: 25 }, // DOUBLED from 16.0
-            { name: 'apple_red', file: 'apple_001.glb', scale: 8.0, category: 'fruit', weight: 20 }, // Reduced from 12.0
-            { name: 'banana', file: 'banana_001.glb', scale: 7.0, category: 'fruit', weight: 20 }, // Reduced from 10.0
+            { name: 'apple', file: 'cute_apple.glb', scale: 28.0, category: 'fruit', weight: 25 }, // Reduced from 32.0 to 20.0
+            { name: 'apple_red', file: 'apple_001.glb', scale: 8.5, category: 'fruit', weight: 20 }, // Reduced from 12.0
+            { name: 'banana', file: 'banana_001.glb', scale: 6.5, category: 'fruit', weight: 20 }, // Reduced from 10.0
             { name: 'peach', file: 'peach_001.glb', scale: 8.0, category: 'fruit', weight: 20 }, // Reduced from 12.0
             
             // Special items - MEDIUM SPAWN RATE
@@ -143,7 +144,6 @@ export class FoodSpawner {
         const foodModel = this.foodModels.get(selectedFoodType.name);
         
         if (!foodModel) {
-            console.error(`Food model ${selectedFoodType.name} not loaded`);
             return;
         }
         
@@ -179,7 +179,6 @@ export class FoodSpawner {
                 z: (Math.random() - 0.5) * 0.1   // Small depth movement
             }
         });
-        
     }
     
     update(deltaTime) {

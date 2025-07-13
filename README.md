@@ -61,26 +61,16 @@ Augmented-Fruit-Ninja/
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/Augmented-Fruit-Ninja.git
+   git clone https://github.com/NovaActias/Augmented-Fruit-Ninja
    cd Augmented-Fruit-Ninja
    ```
 
 2. **Start a local server**
    
-   Using Python 3:
    ```bash
    python -m http.server 8000
    ```
    
-   Using Node.js (if you have `serve` installed):
-   ```bash
-   npx serve .
-   ```
-   
-   Using Live Server (VS Code extension):
-   - Open project in VS Code
-   - Right-click `index.html` → "Open with Live Server"
-
 3. **Open in browser**
    ```
    http://localhost:8000
