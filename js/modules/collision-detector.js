@@ -1,13 +1,14 @@
 import * as THREE from 'three';
 
 export class CollisionDetector {
-    constructor(handDetector, foodSpawner, gameLogic) {
+    constructor(handDetector, foodSpawner, gameLogic, fingerVisualizer = null) { // NEW: Add fingerVisualizer parameter
         this.handDetector = handDetector;
         this.foodSpawner = foodSpawner;
         this.gameLogic = gameLogic;
+        this.fingerVisualizer = fingerVisualizer; // NEW: Store fingerVisualizer reference
         
         // Collision parameters - tuned for index finger precision
-        this.velocityThreshold = 0.3; // Lower threshold for precise index finger control (was 0.5)
+        this.velocityThreshold = 0; // Lower threshold for precise index finger control (was 0.5)
         this.slicedFoods = new Map(); // Track sliced foods with timestamps
         this.collisionCooldown = 200; // ms between collisions on same food
         
@@ -86,44 +87,41 @@ export class CollisionDetector {
         const foodId = food.mesh.uuid;
         const currentTime = performance.now();
         
-        // Check cache
+        // Check cache first
         const cached = this.boundingBoxCache.get(foodId);
         if (cached && (currentTime - cached.time) < this.cacheTimeout) {
-            return cached.box;
+            return cached.boundingBox;
         }
         
         // Calculate new bounding box
-        const box = new THREE.Box3();
-        box.setFromObject(food.mesh);
-        
+        const box = new THREE.Box3().setFromObject(food.mesh);
+
         // Expand bounding box for easier interaction
-        // Different expansion based on food size
         const expansion = this.getFoodExpansion(food.type);
         box.expandByScalar(expansion);
         
         // Cache the result
         this.boundingBoxCache.set(foodId, {
-            box: box,
+            boundingBox: box,
             time: currentTime
         });
         
         return box;
     }
-    
+
     getFoodExpansion(foodType) {
-        // Reduced expansion factors for more precise collision detection
-        const expansions = {
-            'apple': 0.2,     // Cute apple - much smaller expansion (was 0.4)
-            'apple_red': 0.25, // Medium apple
-            'banana': 0.25,    // Medium banana  
-            'peach': 0.25,     // Medium peach
-            'donut': 0.2,      // Small donut
-            'burger': 0.15,    // Very small burger
-            'plate': 0.1       // Very small plate - most challenging
-        };
-        
-        return expansions[foodType] || 0.2; // Default expansion (reduced)
-    }
+    const expansions = {
+        'apple': 0.1,
+        'apple_red': 0.01,
+        'banana': 0.4,
+        'peach': 0.4,
+        'donut': 0.4,
+        'burger': 0.3,
+        'plate': 0.25
+    };
+    
+    return expansions[foodType] || 0.3;
+}
     
     isPointInBoundingBox(point, boundingBox) {
         return boundingBox.containsPoint(point);
@@ -165,7 +163,7 @@ export class CollisionDetector {
             // Store slice position for visual effects
             this.addRecentSlice(fingertip.position.clone(), food.type, sliceResult.points);
             
-            // Trigger visual effects
+            // NEW: Trigger visual effects with FingerVisualizer
             this.spawnSliceEffects(fingertip.position, food.type, sliceResult);
             
             console.log(`Sliced ${food.type} with ${fingertip.type} finger (${fingertip.velocity.toFixed(2)} vel)! +${sliceResult.points} points`);
@@ -199,15 +197,12 @@ export class CollisionDetector {
     }
     
     spawnSliceEffects(position, foodType, sliceResult) {
-        // TODO: Implement visual effects
-        // Ideas:
-        // - Particle explosion with food-colored particles
-        // - Floating score text
-        // - Screen shake on successful slice
-        // - Combo visual feedback
-        // - Trail effects following fingertip movement
+        // NEW: Create particle effects using FingerVisualizer
+        if (this.fingerVisualizer) {
+            this.fingerVisualizer.createSliceEffect(position, foodType);
+        }
         
-        // For now, just log the effect
+        // Log combo effects
         if (sliceResult.combo > 1) {
             console.log(`🔥 COMBO x${sliceResult.combo}! Effects at`, position);
         }

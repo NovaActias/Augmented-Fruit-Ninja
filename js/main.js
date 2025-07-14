@@ -9,6 +9,7 @@ import { FoodSpawner } from './modules/food-spawner.js';
 import { GameLogic } from './modules/game-logic.js';
 import { HandDetector } from './modules/hand-detector.js';
 import { CollisionDetector } from './modules/collision-detector.js';
+import { FingerVisualizer } from './modules/finger-visualizer.js'; // NEW: Import FingerVisualizer
 
 class AugmentedFoodNinja {
     constructor() {
@@ -23,6 +24,7 @@ class AugmentedFoodNinja {
         this.gameLogic = null;
         this.handDetector = null;
         this.collisionDetector = null;
+        this.fingerVisualizer = null; // NEW: Add FingerVisualizer
         
         // DOM elements
         this.videoElement = document.getElementById('videoElement');
@@ -62,16 +64,22 @@ class AugmentedFoodNinja {
             this.handDetector = new HandDetector(this.videoElement, this.sceneManager.getCamera());
             await this.handDetector.initialize();
             
+            this.updateLoadingStatus('Setting up finger visualization...'); // NEW: Loading message
+            
+            // NEW: Initialize finger visualizer
+            this.fingerVisualizer = new FingerVisualizer(this.sceneManager);
+            
             this.updateLoadingStatus('Setting up collision detection...');
             
             // Initialize game logic
             this.gameLogic = new GameLogic();
             
-            // Initialize collision detector
+            // Initialize collision detector (pass fingerVisualizer for particles)
             this.collisionDetector = new CollisionDetector(
                 this.handDetector, 
                 this.foodSpawner, 
-                this.gameLogic
+                this.gameLogic,
+                this.fingerVisualizer // NEW: Pass fingerVisualizer for slice effects
             );
             
             this.updateLoadingStatus('Ready to play!');
@@ -135,6 +143,12 @@ class AugmentedFoodNinja {
         
         // Update hand detection
         this.handDetector.update();
+        
+        // NEW: Update finger visualization with current fingertips
+        if (this.fingerVisualizer) {
+            const fingertips = this.handDetector.getAllFingertips();
+            this.fingerVisualizer.update(deltaTime, fingertips);
+        }
         
         // Update collision detection
         this.collisionDetector.update();
@@ -218,6 +232,13 @@ class AugmentedFoodNinja {
         }
     }
     
+    // NEW: Toggle finger visualization
+    toggleFingerVisualization() {
+        if (this.fingerVisualizer) {
+            this.fingerVisualizer.setEnabled(!this.fingerVisualizer.isEnabled);
+        }
+    }
+    
     // Get detailed debug information
     getDebugInfo() {
         return {
@@ -226,6 +247,7 @@ class AugmentedFoodNinja {
             foodSpawner: this.foodSpawner ? 'Ready' : 'Not Ready',
             handDetector: this.handDetector ? (this.handDetector.isReady ? 'Ready' : 'Loading') : 'Not Ready',
             collisionDetector: this.collisionDetector ? 'Ready' : 'Not Ready',
+            fingerVisualizer: this.fingerVisualizer ? 'Ready' : 'Not Ready', // NEW: Debug info
             gameState: this.gameState,
             totalFingertips: this.handDetector ? this.handDetector.getAllFingertips().length : 0
         };
@@ -250,6 +272,9 @@ window.addEventListener('load', () => {
             case 'r':
                 // Reset game
                 game.resetGame();
+                break;
+            case 'f': // NEW: Toggle finger visualization
+                game.toggleFingerVisualization();
                 break;
             case '1':
                 // Very low collision sensitivity (precise index finger)
