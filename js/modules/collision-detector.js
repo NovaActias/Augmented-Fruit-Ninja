@@ -108,6 +108,7 @@ export class CollisionDetector {
         
         return box;
     }
+    
 
     getFoodExpansion(foodType) {
     const expansions = {
