@@ -1,7 +1,3 @@
-import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import * as CANNON from 'cannon-es';
-
 // Import modules
 import { CameraManager } from './modules/camera-manager.js';
 import { SceneManager } from './modules/scene-manager.js';
@@ -9,7 +5,7 @@ import { FoodSpawner } from './modules/food-spawner.js';
 import { GameLogic } from './modules/game-logic.js';
 import { HandDetector } from './modules/hand-detector.js';
 import { CollisionDetector } from './modules/collision-detector.js';
-import { FingerVisualizer } from './modules/finger-visualizer.js'; // NEW: Import FingerVisualizer
+import { FingerVisualizer } from './modules/finger-visualizer.js';
 
 class AugmentedFoodNinja {
     constructor() {
@@ -24,7 +20,7 @@ class AugmentedFoodNinja {
         this.gameLogic = null;
         this.handDetector = null;
         this.collisionDetector = null;
-        this.fingerVisualizer = null; // NEW: Add FingerVisualizer
+        this.fingerVisualizer = null;
         
         // DOM elements
         this.videoElement = document.getElementById('videoElement');
@@ -79,7 +75,7 @@ class AugmentedFoodNinja {
                 this.handDetector, 
                 this.foodSpawner, 
                 this.gameLogic,
-                this.fingerVisualizer // NEW: Pass fingerVisualizer for slice effects
+                this.fingerVisualizer
             );
             
             this.updateLoadingStatus('Ready to play!');

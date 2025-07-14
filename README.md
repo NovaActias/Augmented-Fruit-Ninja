@@ -4,7 +4,7 @@ A web-based augmented reality mini-game inspired by the classic Fruit Ninja, dev
 
 ## Project Overview
 
-Augmented Fruit Ninja brings the popular fruit-slicing game into the real world using computer vision and augmented reality technologies. Players use hand gestures or physical objects to slice 3D fruits that fall from the sky, all captured through their webcam in real-time.
+Augmented Fruit Ninja brings the popular fruit-slicing game into the real world using computer vision and augmented reality technologies. Players use hand gestures to slice 3D fruits that fall from the sky, all captured through their webcam in real-time.
 
 ### Key Features
 
@@ -39,11 +39,12 @@ Augmented-Fruit-Ninja/
 │   └── modules/
 │       ├── camera-manager.js      # WebRTC camera handling
 │       ├── scene-manager.js       # Three.js scene setup
-│       ├── fruit-spawner.js       # Procedural fruit generation
+│       ├── food-spawner.js       # Procedural fruit generation
 │       ├── game-logic.js          # Scoring and game rules
 │       ├── physics-engine.js      # Cannon.js physics wrapper
-│       ├── hand-detector.js       # Hand tracking (to be implemented)
-│       └── collision-detector.js  # Fruit slicing detection
+│       ├── hand-detector.js       # Hand tracking 
+|       ├── finger-visualizer.js    # Particles visualizer on the finger
+│       └── collision-detector.js  # Fruit slicing detection     
 ├── README.md
 ├── LICENSE
 └── .gitignore
@@ -53,9 +54,9 @@ Augmented-Fruit-Ninja/
 
 ### Prerequisites
 
-- Modern web browser (Chrome 88+, Firefox 85+, Safari 14+)
+- Modern web browser
 - Webcam access permission
-- Local web server (due to security restrictions)
+- Local web server
 
 ### Installation
 
@@ -76,7 +77,7 @@ Augmented-Fruit-Ninja/
    http://localhost:8000
    ```
 
-4. **Grant camera permissions** when prompted
+4. **Grant camera permissions**
 
 ### Usage Instructions
 
@@ -149,9 +150,9 @@ const points = gameLogic.sliceFruit('apple'); // Returns points earned
 
 ### In Progress
 - [ ] Hand detection using MediaPipe
-- [ ] Collision detection system
+- [x] Collision detection system
 - [ ] Fruit slicing animations
-- [ ] Visual effects for successful hits
+- [x] Visual effects for successful hits
 - [ ] UI overlay for score display
 
 ### Planned Features
@@ -165,40 +166,9 @@ const points = gameLogic.sliceFruit('apple'); // Returns points earned
 This project was developed as part of the **Augmented Reality Laboratory** course at the University of Udine, under the guidance of Prof. Claudio Piciarelli.
 
 
-### Technical Challenges Addressed
-- **Camera-to-3D coordinate mapping** for accurate hand tracking
-- **Real-time performance optimization** for smooth 60fps gameplay
-- **Cross-browser compatibility** with modern web standards
-- **Modular code organization** for maintainability
-
 ## Browser Compatibility
 
-| Browser | Minimum Version | Notes |
-|---------|----------------|--------|
-| Chrome | 88+ | Recommended for best performance |
-| Firefox | 85+ | Full WebRTC support |
-| Safari | 14+ | May require additional permissions |
-| Edge | 88+ | Chromium-based versions only |
-
-## Troubleshooting
-
-### Common Issues
-
-**Camera not working**
-- Ensure HTTPS or localhost (required for WebRTC)
-- Check browser permissions for camera access
-- Try refreshing the page and re-granting permissions
-- Try open in a private page
-
-**Poor performance**
-- Close other browser tabs/applications
-
-## Performance Considerations
-
-- **Target framerate**: 60 FPS
-- **Maximum concurrent fruits**: 8 objects
-- **Physics update rate**: Synchronized with display refresh
-- **Memory management**: Automatic cleanup of off-screen objects
+Only tested on Brave Browser (based on Chromium)
 
 ## Contributing
 
@@ -232,5 +202,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Course**: Laboratorio di Realtà Aumentata  
 **Institution**: Università degli Studi di Udine  
-**Academic Year**: 2024/2025  
-**Author**: [Your Name]
+**Academic Year**: 2024/2025
+**Authors**: [@NovaActias](https://github.com/NovaActias), [@Verryx-02](https://github.com/Verryx-02).

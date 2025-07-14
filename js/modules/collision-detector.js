@@ -205,7 +205,7 @@ export class CollisionDetector {
         
         // Log combo effects
         if (sliceResult.combo > 1) {
-            console.log(`🔥 COMBO x${sliceResult.combo}! Effects at`, position);
+            console.log(` COMBO x${sliceResult.combo}! Effects at`, position);
         }
     }
     
@@ -279,7 +279,7 @@ export class CollisionDetector {
         const timeSinceCollision = performance.now() - this.lastCollisionTime;
         if (timeSinceCollision < 500) {
             const info = this.lastCollisionInfo;
-            const sliceIndicator = info.wasSliced ? "✂️" : "👆";
+            const sliceIndicator = info.wasSliced ? "" : "";
             return `${sliceIndicator} ${info.foodType} (${info.fingertipType}, ${info.velocity.toFixed(1)}v)`;
         }
         

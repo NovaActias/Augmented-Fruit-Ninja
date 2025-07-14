@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as CANNON from 'cannon-es';
 
 export class SceneManager {
@@ -128,24 +127,19 @@ export class SceneManager {
         const physicsObject = { mesh, body };
         this.physicsObjects.push(physicsObject);
         
-        // Restituisci il riferimento diretto all'oggetto invece dell'indice
         return physicsObject;
     }
     
     removePhysicsObject(physicsObject) {
         if (!physicsObject) return false;
         
-        // Trova l'indice dell'oggetto nell'array
         const index = this.physicsObjects.indexOf(physicsObject);
         
         if (index !== -1) {
-            // Rimuovi dalla scena Three.js
             this.scene.remove(physicsObject.mesh);
-            
-            // Rimuovi dal mondo fisico Cannon.js
+
             this.physicsWorld.removeBody(physicsObject.body);
-            
-            // Rimuovi dall'array
+
             this.physicsObjects.splice(index, 1);
             
             return true;
