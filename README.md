@@ -4,16 +4,19 @@ A web-based augmented reality mini-game inspired by the classic Fruit Ninja, dev
 
 ## Project Overview
 
-Augmented Fruit Ninja brings the popular fruit-slicing game into the real world using computer vision and augmented reality technologies. Players use hand gestures to slice 3D fruits that fall from the sky, all captured through their webcam in real-time.
+Augmented Fruit Ninja brings the popular fruit-slicing game into the real world using computer vision and augmented reality technologies. Players use **hand gestures** detected through **MediaPipe** to slice 3D food objects that fall from the sky, all captured through their webcam in real-time.
 
 ### Key Features
 
 - **Real-time webcam integration** with WebRTC
-- **3D fruit spawning** with realistic physics simulation
-- **Hand/object tracking** for natural interaction
-- **Physics-based fruit slicing** with visual effects
-- **Score system** with level progression
-- **Modular architecture** for easy extension
+- **MediaPipe hand tracking** for precise gesture recognition
+- **3D food spawning** with realistic physics simulation using Cannon.js
+- **Dual-hand support** tracking up to 2 hands simultaneously
+- **Visual finger tracking** with animated spheres following index fingers
+- **Advanced collision detection** with velocity-based slicing mechanics
+- **Dynamic scoring system** with combo multipliers and level progression
+- **Particle effects** for successful slices
+- **Modular architecture** for easy extension and maintenance
 - **Browser-based** - no external applications required
 
 ## Technical Architecture
@@ -22,8 +25,8 @@ Augmented Fruit Ninja brings the popular fruit-slicing game into the real world 
 
 - **Three.js** - 3D graphics rendering and scene management
 - **Cannon.js** - Physics simulation for falling objects
+- **MediaPipe** - Real-time hand detection and landmark tracking
 - **WebRTC** - Real-time camera access
-- **MediaPipe** (planned) - Hand detection and gesture recognition
 - **ES6 Modules** - Modern JavaScript architecture
 - **WebGL** - Hardware-accelerated graphics
 
@@ -31,20 +34,20 @@ Augmented Fruit Ninja brings the popular fruit-slicing game into the real world 
 
 ```
 Augmented-Fruit-Ninja/
-├── index.html              # Main HTML entry point
+├── index.html                     # Main HTML entry point
 ├── css/
-│   └── style.css           # Styling (currently empty)
+│   └── style.css                 # Styling (embedded in HTML)
 ├── js/
-│   ├── main.js             # Application entry point
+│   ├── main.js                   # Application entry point and coordination
 │   └── modules/
-│       ├── camera-manager.js      # WebRTC camera handling
-│       ├── scene-manager.js       # Three.js scene setup
-│       ├── food-spawner.js       # Procedural fruit generation
-│       ├── game-logic.js          # Scoring and game rules
-│       ├── physics-engine.js      # Cannon.js physics wrapper
-│       ├── hand-detector.js       # Hand tracking 
-|       ├── finger-visualizer.js    # Particles visualizer on the finger
-│       └── collision-detector.js  # Fruit slicing detection     
+│       ├── camera-manager.js     # WebRTC camera handling
+│       ├── scene-manager.js      # Three.js scene and physics setup
+│       ├── food-spawner.js       # Procedural food generation and management
+│       ├── game-logic.js         # Scoring, combos, and progression
+│       ├── hand-detector.js      # MediaPipe hand tracking integration
+│       ├── finger-visualizer.js  # Visual feedback for finger tracking
+│       ├── collision-detector.js # Velocity-based slicing detection
+│       └── physics-engine.js     # (Reserved for future physics extensions)
 ├── README.md
 ├── LICENSE
 └── .gitignore
@@ -54,9 +57,10 @@ Augmented-Fruit-Ninja/
 
 ### Prerequisites
 
-- Modern web browser
-- Webcam access permission
-- Local web server
+- **Modern web browser** (Chrome/Brave recommended)
+- **Webcam access** permission
+- **HTTPS or localhost** (required for camera access)
+- **Local web server** for development
 
 ### Installation
 
@@ -68,8 +72,14 @@ Augmented-Fruit-Ninja/
 
 2. **Start a local server**
    
+   **Python:**
    ```bash
    python -m http.server 8000
+   ```
+   
+   **Node.js:**
+   ```bash
+   npx serve .
    ```
    
 3. **Open in browser**
@@ -77,98 +87,120 @@ Augmented-Fruit-Ninja/
    http://localhost:8000
    ```
 
-4. **Grant camera permissions**
+4. **Grant camera permissions** when prompted
 
 ### Usage Instructions
 
-1. **Setup**: Position yourself in front of a **white background** for optimal tracking
-2. **Start**: The game begins automatically once the camera initializes
-3. **Play**: Use hand movements or a colored object to "slice" falling fruits
-4. **Score**: Earn points by successfully slicing fruits before they fall off-screen
+1. **Setup**: Position yourself in front of your webcam with good lighting
+2. **Initialization**: The game automatically loads MediaPipe models and initializes camera
+3. **Hand Tracking**: Raise your hands - you'll see yellow spheres following your index fingers
+4. **Play**: Use quick slicing motions with your index fingers to slice falling food objects
+5. **Score**: Earn points by successfully slicing foods before they fall off-screen
 
 ## Game Mechanics
 
-### Fruit Spawning
-- Fruits spawn randomly at the top of the screen every 1.5-2.5 seconds
-- Maximum of 8 fruits on screen simultaneously
-- Four fruit types: Apple (10 pts), Orange (15 pts), Banana (20 pts), Watermelon (25 pts)
-- Physics simulation handles realistic falling motion with rotation
+### Food Spawning System
+- **7 food types** with weighted spawn probabilities:
+  - **Fruits** (85% total): Apple, Red Apple, Banana, Peach
+  - **Desserts** (10%): Donut
+  - **Main dishes** (3%): Burger
+  - **Tableware** (2%): Plate
+- **Spawn timing**: Every 0.5-1.3 seconds (randomized intervals)
+- **Maximum objects**: 15 concurrent food objects for performance optimization
+- **Physics simulation**: Realistic falling motion with gravity and rotation
 
 ### Scoring System
-- Base points per fruit type multiplied by current level
-- Level increases every 30 seconds of gameplay
-- Combo multipliers for consecutive hits (planned feature)
+- **Category-based points** multiplied by current level:
+  - **Fruits**: 15 base points (20 for special apple)
+  - **Main dishes**: 50 base points (60 for burger)
+  - **Desserts**: 30 base points (25 for donut)
+  - **Tableware**: 5 base points
+- **Level progression**: Increases every 30 seconds
+- **Combo system**: Consecutive slices within 2 seconds build multipliers (up to 2.0x)
 
-### Collision Detection
-- Real-time hand/object position tracking
-- 3D collision detection between hand position and fruit meshes
-- Visual slicing effects when collision occurs
+### Hand Tracking & Collision Detection
+- **Dual-hand support**: Tracks up to 2 hands simultaneously
+- **Index finger precision**: Uses MediaPipe landmark 8 for accurate detection
+- **Velocity-based slicing**: Distinguishes between hovering and slicing motions
+- **3D collision detection**: Precise fingertip-to-object intersection testing
+- **Visual feedback**: Yellow spheres follow tracked fingertips with pulsing animations
+
+### Controls & Debugging
+- **Keyboard shortcuts**:
+  - `R` - Reset game
+  - `F` - Toggle finger visualization
+- **Real-time debug info**: FPS, hand count, collision status, game statistics
 
 ## Core Modules
 
 ### CameraManager (`camera-manager.js`)
-Handles webcam initialization and video stream management.
-
-```javascript
-const cameraManager = new CameraManager(videoElement);
-await cameraManager.initialize();
-```
+Handles webcam initialization and video stream management with fallback support.
 
 ### SceneManager (`scene-manager.js`)
-Manages Three.js scene, physics world, and rendering pipeline.
+Manages Three.js scene, physics world, lighting, and rendering pipeline with video background.
 
-```javascript
-const sceneManager = new SceneManager(canvas, videoElement);
-await sceneManager.initialize();
-```
-
-### FruitSpawner (`fruit-spawner.js`)
-Procedurally generates and manages falling fruit objects.
-
-```javascript
-const spawner = new FruitSpawner(sceneManager);
-spawner.spawnFruit(); // Creates new fruit with physics
-```
+### FoodSpawner (`food-spawner.js`)
+Implements weighted random spawning system with 3D model loading and physics integration.
 
 ### GameLogic (`game-logic.js`)
-Handles scoring, level progression, and game state management.
+Handles scoring calculations, combo system, level progression, and game state management.
 
-```javascript
-const gameLogic = new GameLogic();
-const points = gameLogic.sliceFruit('apple'); // Returns points earned
-```
+### HandDetector (`hand-detector.js`)
+MediaPipe integration for real-time hand landmark detection with velocity tracking and coordinate transformation.
+
+### FingerVisualizer (`finger-visualizer.js`)
+Provides visual feedback through animated spheres and particle effects for successful slices.
+
+### CollisionDetector (`collision-detector.js`)
+Advanced 3D collision detection with velocity-based slice recognition and performance optimization.
 
 ## Development Status
 
-### Implemented Features
-- [x] WebRTC camera integration
-- [x] Three.js 3D scene setup
-- [x] Physics-based fruit spawning
-- [x] Basic game logic and scoring
-- [x] Modular architecture
-- [x] Real-time rendering loop
+### ✅ Implemented Features
+- [x] WebRTC camera integration with fallback handling
+- [x] MediaPipe hand detection and tracking (up to 2 hands)
+- [x] Three.js 3D scene with physics simulation
+- [x] Weighted food spawning system with 7 food types
+- [x] Advanced collision detection with velocity recognition
+- [x] Dynamic scoring system with combo multipliers
+- [x] Level progression and game state management
+- [x] Visual finger tracking with animated spheres
+- [x] Particle effects for successful slices
+- [x] Real-time debug information and controls
+- [x] Modular architecture with clean separation of concerns
 
-### In Progress
-- [ ] Hand detection using MediaPipe
-- [x] Collision detection system
-- [ ] Fruit slicing animations
-- [x] Visual effects for successful hits
-- [ ] UI overlay for score display
-
-### Planned Features
-- [ ] Bomb objects (avoid slicing)
+### 🚧 Planned Features
+- [ ] Bomb objects to avoid (penalty for slicing)
 - [ ] Power-ups and special effects
-- [ ] High score persistence
-- [ ] Mobile device support
+- [ ] Sound effects and audio feedback
+- [ ] High score persistence with local storage
+- [ ] Mobile device optimization
+- [ ] Additional gesture recognition (multi-finger slicing)
+- [ ] Performance analytics and optimization tools
 
-## Academic Context
+## Performance Considerations
 
-This project was developed as part of the **Augmented Reality Laboratory** course at the University of Udine, under the guidance of Prof. Claudio Piciarelli.
-
+- **Optimized rendering**: Shared geometries and materials for efficiency
+- **Smart collision detection**: Bounding box caching and cleanup systems
+- **Physics optimization**: Fixed timestep simulation with configurable substeps
+- **Memory management**: Automatic cleanup of expired objects and tracking data
+- **Frame rate targeting**: 60 FPS with adaptive quality adjustments
 
 ## Browser Compatibility
 
-Only tested on Brave Browser (based on Chromium)
+- **Recommended**: Chrome/Chromium-based browsers (Brave, Edge)
+- **MediaPipe support**: Modern browsers with WebAssembly support
+- **WebRTC requirement**: HTTPS or localhost for camera access
+- **WebGL requirement**: Hardware acceleration recommended
+
+## Academic Context
+
+This project was developed as part of the **Augmented Reality Laboratory** course at the University of Udine, under the guidance of Prof. Claudio Piciarelli. The implementation demonstrates practical application of:
+
+- **Computer Vision**: Real-time hand tracking and gesture recognition
+- **3D Graphics**: Scene management and physics simulation
+- **Human-Computer Interaction**: Natural gesture-based interfaces
+- **Performance Optimization**: Real-time processing and rendering techniques
 
 ## Contributing
 
@@ -188,19 +220,19 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **Prof. Claudio Piciarelli** - Course instructor and project guidance
 - **University of Udine** - Academic support and resources
-- **Three.js Community** - 3D graphics framework
-- **MediaPipe Team** - Computer vision tools
+- **MediaPipe Team** - Advanced computer vision framework
+- **Three.js Community** - Comprehensive 3D graphics framework
 - **Cannon.js Contributors** - Physics simulation library
 
 ## References
 
 - [Three.js Documentation](https://threejs.org/docs/)
+- [MediaPipe Hand Landmarker](https://developers.google.com/mediapipe/solutions/vision/hand_landmarker)
 - [WebRTC API Reference](https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API)
-- [MediaPipe Hand Detection](https://developers.google.com/mediapipe/solutions/vision/hand_landmarker)
 
 ---
 
 **Course**: Laboratorio di Realtà Aumentata  
 **Institution**: Università degli Studi di Udine  
-**Academic Year**: 2024/2025
-**Authors**: [@NovaActias](https://github.com/NovaActias), [@Verryx-02](https://github.com/Verryx-02).
+**Academic Year**: 2024/2025  
+**Authors**: [@NovaActias](https://github.com/NovaActias), [@Verryx-02](https://github.com/Verryx-02)

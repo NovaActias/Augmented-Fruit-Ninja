@@ -309,29 +309,6 @@ class AugmentedFoodNinja {
     }
     
     /**
-     * Toggle collision bounding box visualization for debugging
-     * 
-     * Useful for developers to visualize collision detection areas
-     * and fine-tune collision sensitivity.
-     */
-    toggleBoundingBoxes() {
-        if (this.collisionDetector) {
-            this.collisionDetector.toggleBoundingBoxes();
-        }
-    }
-    
-    /**
-     * Adjust collision detection sensitivity
-     * 
-     * @param {number} sensitivity - New velocity threshold (0.0 to 3.0)
-     */
-    adjustCollisionSensitivity(sensitivity) {
-        if (this.collisionDetector) {
-            this.collisionDetector.setVelocityThreshold(sensitivity);
-        }
-    }
-    
-    /**
      * Toggle finger visualization on/off
      * 
      * Allows users to disable visual finger tracking if desired.
@@ -376,38 +353,23 @@ window.addEventListener('load', () => {
     window.foodNinjaGame = game;
     
     /**
-     * Keyboard shortcuts for debugging and testing
+     * Keyboard shortcuts for game control
      * 
-     * These shortcuts allow developers and testers to quickly:
-     * - Toggle debugging visualizations
-     * - Adjust game parameters
-     * - Reset game state
+     * These shortcuts allow users to:
+     * - Reset the game state
+     * - Toggle finger visualization
      */
     window.addEventListener('keydown', (event) => {
         switch(event.key) {
-            case 'b':
-                // Toggle collision bounding boxes visualization
-                game.toggleBoundingBoxes();
-                break;
             case 'r':
+            case 'R':
                 // Reset game to initial state
                 game.resetGame();
                 break;
             case 'f':
+            case 'F':
                 // Toggle finger visualization on/off
                 game.toggleFingerVisualization();
-                break;
-            case '1':
-                // Very low collision sensitivity (precise index finger only)
-                game.adjustCollisionSensitivity(0.1);
-                break;
-            case '2':
-                // Normal collision sensitivity (default setting)
-                game.adjustCollisionSensitivity(0.3);
-                break;
-            case '3':
-                // High collision sensitivity (easier slicing for accessibility)
-                game.adjustCollisionSensitivity(0.6);
                 break;
         }
     });

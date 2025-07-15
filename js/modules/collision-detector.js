@@ -496,7 +496,7 @@ export class CollisionDetector {
      * Get current collision status for UI display
      * 
      * Formats collision information for user interface display with
-     * appropriate icons and timing.
+     * slicing status and timing.
      * 
      * @returns {string} Formatted collision status string
      */
@@ -506,7 +506,7 @@ export class CollisionDetector {
         const timeSinceCollision = performance.now() - this.lastCollisionTime;
         if (timeSinceCollision < 500) {
             const info = this.lastCollisionInfo;
-            const sliceIndicator = info.wasSliced ? "✂️" : "👆";
+            const sliceIndicator = info.wasSliced ? "SLICED" : "TOUCH";
             return `${sliceIndicator} ${info.foodType} (${info.fingertipType}, ${info.velocity.toFixed(1)}v)`;
         }
         
