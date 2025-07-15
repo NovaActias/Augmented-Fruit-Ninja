@@ -3,13 +3,13 @@ import * as THREE from 'three';
 /**
  * Finger Visualizer Class
  * 
- * Provides real-time visual feedback for hand tracking by displaying a dynamic
- * indicator that follows the user's index finger. This class enhances user experience
+ * Provides real-time visual feedback for hand tracking by displaying dynamic
+ * indicators that follow the user's index fingers. This class enhances user experience
  * by making hand tracking visible and responsive, helping users understand where
- * the system detects their finger and when slicing actions are possible.
+ * the system detects their fingers and when slicing actions are possible.
  * 
  * Key responsibilities:
- * - Display animated sphere that follows index finger position
+ * - Display animated spheres that follow up to 2 index fingers (one per hand)
  * - Provide smooth position interpolation for natural movement
  * - Create pulsing animation effects for engaging visual feedback
  * - Generate particle effects when successful slices occur
@@ -27,9 +27,15 @@ export class FingerVisualizer {
         this.sceneManager = sceneManager;
         this.scene = sceneManager.getScene();
         
-        // Visual indicator state
-        this.fingerSphere = null;           // Three.js mesh for finger indicator
-        this.isVisible = false;             // Current visibility state
+        /**
+         * Multi-sphere tracking system
+         * 
+         * Uses Map to track individual spheres for each detected index finger.
+         * Key: fingertip ID (unique identifier from hand detector)
+         * Value: sphere data object with mesh and animation state
+         */
+        this.fingerSpheres = new Map();     // Map of fingertip ID to sphere data
+        this.maxSpheres = 2;                // Maximum number of spheres (2 hands max)
         
         /**
          * Sphere visual configuration
@@ -64,9 +70,9 @@ export class FingerVisualizer {
     /**
      * Update finger visualization for current frame
      * 
-     * Processes current fingertip data to update visual indicator position,
-     * visibility, and animation state. Handles smooth transitions when
-     * fingers appear/disappear from tracking.
+     * Processes current fingertip data to update visual indicator positions,
+     * visibility, and animation states. Handles smooth transitions when
+     * fingers appear/disappear from tracking and manages multiple spheres.
      * 
      * @param {number} deltaTime - Time elapsed since last frame in seconds
      * @param {Array} fingertips - Array of detected fingertips with position data
@@ -78,83 +84,111 @@ export class FingerVisualizer {
         this.animationTime += deltaTime;
         
         /**
-         * Find index finger for visualization
+         * Filter for index fingers only
          * 
-         * The system specifically tracks index finger for precision slicing,
-         * so we only visualize the index finger position for clarity.
+         * The system specifically tracks index fingers for precision slicing,
+         * so we only visualize index finger positions for clarity.
          */
-        const indexFinger = fingertips.find(ft => ft.type === 'index');
+        const indexFingers = fingertips.filter(ft => ft.type === 'index');
         
-        if (indexFinger) {
-            // Show indicator if finger is detected
-            if (!this.isVisible) {
-                this.showSphere();
+        // Get currently active fingertip IDs for tracking
+        const activeFingertipIds = new Set(indexFingers.map(ft => ft.id));
+        
+        /**
+         * Update existing spheres and create new ones
+         * 
+         * Process each detected index finger and ensure it has a corresponding
+         * visual sphere. Limit to maximum number of spheres for performance.
+         */
+        for (const fingertip of indexFingers) {
+            // Respect maximum sphere limit
+            if (!this.fingerSpheres.has(fingertip.id) && this.fingerSpheres.size >= this.maxSpheres) {
+                continue;
             }
             
-            // Update sphere position with smooth following
-            this.updateSpherePosition(indexFinger.position, deltaTime);
+            if (!this.fingerSpheres.has(fingertip.id)) {
+                // Create new sphere for this fingertip
+                this.createSphere(fingertip.id);
+            }
             
-            // Apply continuous pulsing animation
-            this.updatePulseAnimation();
-            
-        } else {
-            // Hide indicator if no index finger detected
-            if (this.isVisible) {
-                this.hideSphere();
+            // Update sphere position and animation
+            this.updateSphere(fingertip.id, fingertip.position, deltaTime);
+        }
+        
+        /**
+         * Remove spheres for fingertips no longer detected
+         * 
+         * Clean up spheres for fingers that are no longer being tracked
+         * to prevent visual artifacts and memory leaks.
+         */
+        for (const [fingertipId] of this.fingerSpheres) {
+            if (!activeFingertipIds.has(fingertipId)) {
+                this.removeSphere(fingertipId);
             }
         }
+        
+        // Apply continuous pulsing animation to all active spheres
+        this.updateAllSphereAnimations();
     }
     
     /**
-     * Show the finger tracking sphere with smooth entrance animation
+     * Create a new sphere for a detected fingertip
      * 
-     * Creates the visual sphere if needed and starts it with a small scale
-     * that will animate to full size. This provides smooth visual feedback
-     * when finger tracking begins.
+     * Creates visual sphere with smooth entrance animation and stores
+     * it in the tracking map with associated animation state.
+     * 
+     * @param {string} fingertipId - Unique identifier for the fingertip
      */
-    showSphere() {
-        if (!this.fingerSphere) {
-            /**
-             * Create new sphere mesh instance
-             * 
-             * Uses shared geometry and material for performance while
-             * creating independent mesh for position and scale control.
-             */
-            this.fingerSphere = new THREE.Mesh(this.sphereGeometry, this.sphereMaterial);
-            this.scene.add(this.fingerSphere);
-        }
-        this.isVisible = true;
+    createSphere(fingertipId) {
+        /**
+         * Create new sphere mesh instance
+         * 
+         * Uses shared geometry but cloned material for independent
+         * opacity and color control per sphere.
+         */
+        const sphereMesh = new THREE.Mesh(
+            this.sphereGeometry, 
+            this.sphereMaterial.clone()
+        );
+        
+        /**
+         * Initialize sphere data object
+         * 
+         * Stores mesh reference and animation state for this specific
+         * fingertip. Scale starts small for smooth entrance animation.
+         */
+        const sphereData = {
+            mesh: sphereMesh,
+            isVisible: true,
+            animationPhase: 0,              // Individual animation phase offset
+            creationTime: this.animationTime
+        };
         
         // Start with small scale for smooth entrance animation
-        this.fingerSphere.scale.setScalar(0.1);
+        sphereMesh.scale.setScalar(0.1);
+        
+        // Add to scene and tracking
+        this.scene.add(sphereMesh);
+        this.fingerSpheres.set(fingertipId, sphereData);
+        
+        console.log(`Created sphere for fingertip: ${fingertipId}`);
     }
     
     /**
-     * Hide the finger tracking sphere with smooth exit animation
+     * Update individual sphere position and scale animation
      * 
-     * Initiates animated removal of the sphere when finger tracking is lost.
-     * The sphere scales down smoothly rather than disappearing instantly.
-     */
-    hideSphere() {
-        if (this.fingerSphere && this.isVisible) {
-            // Start smooth exit animation
-            this.animateOut();
-        }
-        this.isVisible = false;
-    }
-    
-    /**
-     * Update sphere position with smooth interpolated following
+     * Handles smooth position following and entrance/exit animations
+     * for a specific sphere. Each sphere animates independently.
      * 
-     * Implements smooth position tracking that follows finger movement
-     * without jitter or abrupt changes. The sphere gradually moves toward
-     * the target position and scales up to full size when first shown.
-     * 
+     * @param {string} fingertipId - Unique identifier for the fingertip
      * @param {THREE.Vector3} targetPosition - Target world position to follow
      * @param {number} deltaTime - Time elapsed since last frame for smooth interpolation
      */
-    updateSpherePosition(targetPosition, deltaTime) {
-        if (!this.fingerSphere) return;
+    updateSphere(fingertipId, targetPosition, deltaTime) {
+        const sphereData = this.fingerSpheres.get(fingertipId);
+        if (!sphereData || !sphereData.mesh) return;
+        
+        const sphere = sphereData.mesh;
         
         /**
          * Smooth position interpolation
@@ -163,7 +197,7 @@ export class FingerVisualizer {
          * that feels natural and responsive. The interpolation factor (12)
          * is tuned for good responsiveness without overshooting.
          */
-        this.fingerSphere.position.lerp(targetPosition, deltaTime * 12);
+        sphere.position.lerp(targetPosition, deltaTime * 12);
         
         /**
          * Smooth scale animation to full size
@@ -173,41 +207,73 @@ export class FingerVisualizer {
          * but smooth scaling animation.
          */
         const targetScale = 1.0;
-        const currentScale = this.fingerSphere.scale.x;
+        const currentScale = sphere.scale.x;
         const newScale = THREE.MathUtils.lerp(currentScale, targetScale, deltaTime * 8);
-        this.fingerSphere.scale.setScalar(newScale);
+        sphere.scale.setScalar(newScale);
     }
     
     /**
-     * Apply continuous pulsing animation to the sphere
+     * Apply continuous pulsing animation to all active spheres
      * 
      * Creates engaging visual feedback through subtle pulsing effects
-     * that help users understand the sphere is an active tracking indicator.
-     * The animation is designed to be noticeable but not distracting.
+     * that help users understand the spheres are active tracking indicators.
+     * Each sphere has slight phase offset for visual variety.
      */
-    updatePulseAnimation() {
-        if (!this.fingerSphere) return;
+    updateAllSphereAnimations() {
+        for (const [fingertipId, sphereData] of this.fingerSpheres) {
+            if (!sphereData.mesh) continue;
+            
+            /**
+             * Individual animation phase for visual variety
+             * 
+             * Each sphere gets a slight phase offset based on creation time
+             * to prevent all spheres from pulsing in perfect synchronization.
+             */
+            const phaseOffset = sphereData.creationTime * 0.5;
+            const animationPhase = this.animationTime + phaseOffset;
+            
+            /**
+             * Scale-based pulsing effect
+             * 
+             * Sine wave animation creates natural pulsing rhythm.
+             * Frequency (4) and amplitude (0.1) are tuned for subtle effect
+             * that enhances visual appeal without being distracting.
+             */
+            const pulseAmount = Math.sin(animationPhase * 4) * 0.1 + 1.0;
+            const baseScale = 1.0;
+            sphereData.mesh.scale.setScalar(baseScale * pulseAmount);
+            
+            /**
+             * Opacity-based pulsing effect
+             * 
+             * Subtle opacity variation (different frequency from scale)
+             * adds visual depth and helps indicate active tracking state.
+             * Minimum opacity ensures sphere remains visible.
+             */
+            const opacityPulse = Math.sin(animationPhase * 3) * 0.2 + 0.8;
+            sphereData.mesh.material.opacity = Math.max(0.6, opacityPulse);
+        }
+    }
+    
+    /**
+     * Remove sphere for fingertip no longer being tracked
+     * 
+     * Provides smooth visual feedback when finger disappears from tracking
+     * by gradually scaling down and fading out the sphere before removal.
+     * 
+     * @param {string} fingertipId - Unique identifier for the fingertip to remove
+     */
+    removeSphere(fingertipId) {
+        const sphereData = this.fingerSpheres.get(fingertipId);
+        if (!sphereData || !sphereData.mesh) return;
         
-        /**
-         * Scale-based pulsing effect
-         * 
-         * Sine wave animation creates natural pulsing rhythm.
-         * Frequency (4) and amplitude (0.1) are tuned for subtle effect
-         * that enhances visual appeal without being distracting.
-         */
-        const pulseAmount = Math.sin(this.animationTime * 4) * 0.1 + 1.0;
-        const baseScale = 1.0;
-        this.fingerSphere.scale.setScalar(baseScale * pulseAmount);
+        console.log(`Removing sphere for fingertip: ${fingertipId}`);
         
-        /**
-         * Opacity-based pulsing effect
-         * 
-         * Subtle opacity variation (different frequency from scale)
-         * adds visual depth and helps indicate active tracking state.
-         * Minimum opacity ensures sphere remains visible.
-         */
-        const opacityPulse = Math.sin(this.animationTime * 3) * 0.2 + 0.8;
-        this.sphereMaterial.opacity = Math.max(0.6, opacityPulse);
+        // Start exit animation
+        this.animateSphereOut(sphereData.mesh, () => {
+            // Cleanup callback after animation completes
+            this.fingerSpheres.delete(fingertipId);
+        });
     }
     
     /**
@@ -216,9 +282,12 @@ export class FingerVisualizer {
      * Provides smooth visual feedback when finger disappears from tracking
      * by gradually scaling down and fading out the sphere before removal.
      * Uses recursive animation for smooth 60fps effect.
+     * 
+     * @param {THREE.Mesh} sphereMesh - The sphere mesh to animate out
+     * @param {Function} onComplete - Callback function when animation completes
      */
-    animateOut() {
-        if (!this.fingerSphere) return;
+    animateSphereOut(sphereMesh, onComplete) {
+        if (!sphereMesh) return;
         
         /**
          * Recursive scale-down animation
@@ -228,16 +297,20 @@ export class FingerVisualizer {
          * is too small to be meaningful, then removes from scene.
          */
         const animateScale = () => {
-            if (!this.fingerSphere) return;
+            if (!sphereMesh || !sphereMesh.parent) {
+                onComplete();
+                return;
+            }
             
             // Reduce scale and opacity each frame
-            this.fingerSphere.scale.multiplyScalar(0.9);
-            this.sphereMaterial.opacity *= 0.9;
+            sphereMesh.scale.multiplyScalar(0.9);
+            sphereMesh.material.opacity *= 0.9;
             
             // Remove when sufficiently small
-            if (this.fingerSphere.scale.x < 0.05) {
-                this.scene.remove(this.fingerSphere);
-                this.fingerSphere = null;
+            if (sphereMesh.scale.x < 0.05) {
+                this.scene.remove(sphereMesh);
+                sphereMesh.material.dispose();
+                onComplete();
             } else {
                 // Continue animation next frame
                 requestAnimationFrame(animateScale);
@@ -373,18 +446,29 @@ export class FingerVisualizer {
      * Toggle finger visualization on/off
      * 
      * Allows runtime control of visualization for user preference
-     * or performance optimization. When disabled, hides current
-     * sphere and prevents future visualization.
+     * or performance optimization. When disabled, hides all current
+     * spheres and prevents future visualization.
      * 
      * @param {boolean} enabled - Whether to enable finger visualization
      */
     setEnabled(enabled) {
         this.isEnabled = enabled;
         
-        // Hide sphere immediately if disabling
-        if (!enabled && this.fingerSphere) {
-            this.hideSphere();
+        // Hide all spheres immediately if disabling
+        if (!enabled) {
+            for (const [fingertipId] of this.fingerSpheres) {
+                this.removeSphere(fingertipId);
+            }
         }
+    }
+    
+    /**
+     * Get number of currently active finger spheres
+     * 
+     * @returns {number} Count of active finger visualization spheres
+     */
+    getActiveSphereCount() {
+        return this.fingerSpheres.size;
     }
     
     /**
@@ -396,26 +480,38 @@ export class FingerVisualizer {
      * @returns {Object} Current visualizer state and configuration
      */
     getDebugInfo() {
+        const sphereInfo = {};
+        for (const [fingertipId, sphereData] of this.fingerSpheres) {
+            sphereInfo[fingertipId] = {
+                visible: sphereData.isVisible,
+                scale: sphereData.mesh ? sphereData.mesh.scale.x.toFixed(2) : 'N/A'
+            };
+        }
+        
         return {
             isEnabled: this.isEnabled,
-            sphereVisible: this.isVisible,
+            activeSpheres: this.fingerSpheres.size,
+            maxSpheres: this.maxSpheres,
             sphereRadius: this.sphereRadius,
-            animationTime: this.animationTime.toFixed(2)
+            animationTime: this.animationTime.toFixed(2),
+            sphereDetails: sphereInfo
         };
     }
     
     /**
-     * Clean up resources and remove from scene
+     * Clean up resources and remove all spheres from scene
      * 
      * Properly disposes of all Three.js resources to prevent memory leaks.
      * Should be called when the visualizer is no longer needed.
      */
     dispose() {
-        // Remove sphere from scene if present
-        if (this.fingerSphere) {
-            this.scene.remove(this.fingerSphere);
-            this.fingerSphere = null;
+        // Remove all spheres from scene
+        for (const [fingertipId] of this.fingerSpheres) {
+            this.removeSphere(fingertipId);
         }
+        
+        // Clear tracking map
+        this.fingerSpheres.clear();
         
         // Dispose of shared geometry and material
         this.sphereGeometry.dispose();
