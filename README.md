@@ -4,7 +4,7 @@ A web-based augmented reality mini-game inspired by the classic Fruit Ninja, dev
 
 ## Project Overview
 
-Augmented Fruit Ninja brings the popular fruit-slicing game into the real world using computer vision and augmented reality technologies. Players use **hand gestures** detected through **MediaPipe** to slice 3D food objects that fall from the sky, all captured through their webcam in real-time.
+Players use **hand gestures** detected through **MediaPipe** to slice 3D food objects that fall from the sky, all captured through their webcam in real-time.
 
 ### Key Features
 
@@ -27,7 +27,6 @@ Augmented Fruit Ninja brings the popular fruit-slicing game into the real world 
 - **Cannon.js** - Physics simulation for falling objects
 - **MediaPipe** - Real-time hand detection and landmark tracking
 - **WebRTC** - Real-time camera access
-- **ES6 Modules** - Modern JavaScript architecture
 - **WebGL** - Hardware-accelerated graphics
 
 ### Project Structure
@@ -75,11 +74,6 @@ Augmented-Fruit-Ninja/
    **Python:**
    ```bash
    python -m http.server 8000
-   ```
-   
-   **Node.js:**
-   ```bash
-   npx serve .
    ```
    
 3. **Open in browser**
@@ -156,10 +150,11 @@ Advanced 3D collision detection with velocity-based slice recognition and perfor
 
 ## Development Status
 
-### ✅ Implemented Features
+### Implemented Features
 - [x] WebRTC camera integration with fallback handling
 - [x] MediaPipe hand detection and tracking (up to 2 hands)
-- [x] Three.js 3D scene with physics simulation
+- [x] Three.js 3D scene
+- [x] Cannon physics simulation
 - [x] Weighted food spawning system with 7 food types
 - [x] Advanced collision detection with velocity recognition
 - [x] Dynamic scoring system with combo multipliers
@@ -167,16 +162,13 @@ Advanced 3D collision detection with velocity-based slice recognition and perfor
 - [x] Visual finger tracking with animated spheres
 - [x] Particle effects for successful slices
 - [x] Real-time debug information and controls
-- [x] Modular architecture with clean separation of concerns
 
-### 🚧 Planned Features
+### Planned Features
 - [ ] Bomb objects to avoid (penalty for slicing)
 - [ ] Power-ups and special effects
 - [ ] Sound effects and audio feedback
 - [ ] High score persistence with local storage
-- [ ] Mobile device optimization
 - [ ] Additional gesture recognition (multi-finger slicing)
-- [ ] Performance analytics and optimization tools
 
 ## Performance Considerations
 
@@ -184,14 +176,7 @@ Advanced 3D collision detection with velocity-based slice recognition and perfor
 - **Smart collision detection**: Bounding box caching and cleanup systems
 - **Physics optimization**: Fixed timestep simulation with configurable substeps
 - **Memory management**: Automatic cleanup of expired objects and tracking data
-- **Frame rate targeting**: 60 FPS with adaptive quality adjustments
-
-## Browser Compatibility
-
-- **Recommended**: Chrome/Chromium-based browsers (Brave, Edge)
-- **MediaPipe support**: Modern browsers with WebAssembly support
-- **WebRTC requirement**: HTTPS or localhost for camera access
-- **WebGL requirement**: Hardware acceleration recommended
+- **Frame rate targeting**: 60 FPS
 
 ## Academic Context
 
@@ -200,7 +185,6 @@ This project was developed as part of the **Augmented Reality Laboratory** cours
 - **Computer Vision**: Real-time hand tracking and gesture recognition
 - **3D Graphics**: Scene management and physics simulation
 - **Human-Computer Interaction**: Natural gesture-based interfaces
-- **Performance Optimization**: Real-time processing and rendering techniques
 
 ## Contributing
 
